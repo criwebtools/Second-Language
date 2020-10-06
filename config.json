@@ -1,0 +1,139 @@
+{
+  "name": "Yale Second Language extension",
+  "namespace": "YDCCLib\\YDCCLibSecondLanguage",
+  "description": "Basic multilanguage support for REDCap forms",
+  "authors": [
+    {
+      "name": "Peter Charpentier",
+      "email": "peter.charpentier@yale.edu",
+      "institution": "Yale University"
+    }
+  ],
+  "versions": [
+    {
+      "1.0.0": "2020-10-01: Initial production version"
+    }
+  ],
+  "permissions": [
+    "redcap_module_link_check_display",
+    "redcap_data_entry_form",
+    "redcap_every_page_top"
+  ],
+  "links": {
+    "project": [
+      {
+        "name": "SecondLanguage: Copy from dev",
+        "icon": "exclamation_frame",
+        "url": "plugins/copy_from_dev.php"
+      },
+      {
+        "name": "SecondLanguage: Print create-table SQL",
+        "icon": "wrench",
+        "url": "plugins/print_create_table_sql.php"
+      }
+    ]
+  },
+  "project-settings": [
+    {
+      "key": "ydcclib-language",
+      "name": "Language (in addition to the primary language)",
+      "required": false,
+      "type": "text",
+      "repeatable": true
+    },
+    {
+      "key": "projecttype",
+      "name": "(optional) Development or Production",
+      "required": false,
+      "type": "dropdown",
+      "choices": [
+        {"name": "development", "value": "D"},
+        {"name": "production", "value": "P"}
+      ]
+    },
+    {
+      "key": "devonsamehost",
+      "name": "Is the development project on this REDCap instance?&nbsp;",
+      "required": false,
+      "type": "dropdown",
+      "choices": [
+        {"name": "Yes, same instance", "value": "Y"},
+        {"name": "No, another instance", "value": "N"}
+      ],
+      "branchingLogic": {
+        "field": "projecttype",
+        "op": "=",
+        "value": "P"
+      }
+    },
+    {
+      "key": "devprojecthost",
+      "name": "Development project host <br /><em>example</em>: https://redcap.trantor.gov&nbsp;",
+      "required": false,
+      "type": "text",
+      "branchingLogic": {
+        "conditions": [
+          {
+            "field": "projecttype",
+            "op": "=",
+            "value": "P"
+          },
+          {
+            "field": "devonsamehost",
+            "op": "=",
+            "value": "N"
+          }
+        ]
+      }
+    },
+    {
+      "key": "devprojectapitoken",
+      "name": "Development project API token",
+      "required": false,
+      "type": "text",
+      "branchingLogic": {
+        "conditions": [
+          {
+            "field": "projecttype",
+            "op": "=",
+            "value": "P"
+          },
+          {
+            "field": "devonsamehost",
+            "op": "=",
+            "value": "N"
+          }
+        ]
+      }
+    },
+    {
+      "key": "devprojectid",
+      "name": "Development project ID",
+      "required": false,
+      "type": "project-id",
+      "branchingLogic": {
+        "conditions": [
+          {
+            "field": "projecttype",
+            "op": "=",
+            "value": "P"
+          },
+          {
+            "field": "devonsamehost",
+            "op": "=",
+            "value": "Y"
+          }
+        ]
+      }
+    }
+  ],
+  "no-auth-pages": [
+    "plugins/get_translations"
+  ],
+  "compatibility": {
+    "php-version-min": "5.6",
+    "redcap-version-min": "9.1.23"
+  }
+
+
+}

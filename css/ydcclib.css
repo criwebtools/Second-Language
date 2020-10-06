@@ -1,0 +1,46 @@
+
+.ydcclib-language-element-title {
+   color: steelblue;
+   font-style: italic;
+   font-weight: 700;
+}
+
+.yale-second-language-button-section {
+   width: 100%;
+   float: left;
+   clear: both;
+   margin-top: 1rem;
+   margin-bottom: 1rem;
+}
+
+.yale-second-language-button {
+   padding-bottom: 10px;
+   padding-top: 8px;
+   float: left;
+   margin-right: 1rem;
+   color: cornflowerblue;
+   background-color: white;
+   font-weight: 800;
+   border: 2px solid cornflowerblue;
+   border-radius: 3px;
+   width: 5rem;
+   text-align: center;
+}
+
+.yale-second-language-button-selected {
+   color: white !important;
+   background-color: cornflowerblue !important;
+}
+
+.yale-second-language-button:hover {
+   cursor: pointer;
+   color: white;
+   background-color: cornflowerblue;
+}
+
+
+/* --- JQUERY UI HELPERS --*/
+.dialogWithShadow {
+   -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+   -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+}
