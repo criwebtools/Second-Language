@@ -1,5 +1,6 @@
-var language_field = "";
-var completion_field = "";
+var ydcclib_language_field = "";
+var ydcclib_completion_field = "";
+var ydcclib_formTranslations = YDCCLIB_FORM_TRANSLATIONS;
 
 (function(){
 
@@ -10,49 +11,42 @@ var completion_field = "";
    var record_id = "YDCCLIB_RECORD";
    var username = "YDCCLIB_USERNAME";
    var form_name = "YDCCLIB_FORM_NAME";
+   var initializationData = YDCCLIB_FORM_INITIALIZATION_DATA;
 
 	function initialize() {
-      $.ajax({
-         method: 'POST',
-         url: ajaxService,
-         dataType: 'json',
-         data: { project_id: project_id, username: username, form_name: form_name, request: 'get-initialization-data'  }
-      }).done(function(data) {
-         console.log(data);
-         data.languages.forEach(function(item){
-            theLanguages.push(item);
-         });
-         language_field = data.language_field;
-         completion_field = data.completion_field;
-         insertLanguageButtonSection();
-         updateLanguageField();
 
-         if ( language_field ){
+      console.log(initializationData);
 
-            var language = $('input[name='+language_field+']').val();
-            var completion = $('select[name='+completion_field+']').val();
-            var selected_language = $('div.yale-second-language-button.yale-second-language-button-selected').attr('language');
+      initializationData.languages.forEach(function(item){
+         theLanguages.push(item);
+      });
 
-            if ( language && language !== selected_language && completion !== "2") {
-               $('div.yale-second-language-button[language='+language+']').trigger('click');
-            }
+      ydcclib_language_field = initializationData.language_field;
+      ydcclib_completion_field = initializationData.completion_field;
 
+      insertLanguageButtonSection();
+      updateLanguageField();
+
+      if ( ydcclib_language_field ){
+
+         var language = $('input[name='+ydcclib_language_field+']').val();
+         var completion = $('select[name='+ydcclib_completion_field+']').val();
+         var selected_language = $('div.yale-second-language-button.yale-second-language-button-selected').attr('language');
+
+         if ( language && language !== selected_language && completion !== "2") {
+            $('div.yale-second-language-button[language='+language+']').trigger('click');
          }
 
-      }).fail(function(jqXHR, textStatus, errorThrown) {
-         console.log(jqXHR);
-         alert('AJAX error: '+errorThrown);
-      }).always(function(){
+      }
 
-      });
    }
 
    function updateLanguageField( force ){
-      var completion = $('select[name='+completion_field+']').val() || '0';
+      var completion = $('select[name='+ydcclib_completion_field+']').val() || '0';
       force = force || false;
-      if ( language_field && completion !== '2' ) {
+      if ( ydcclib_language_field && completion !== '2' ) {
          var selected_language = $('div.yale-second-language-button.yale-second-language-button-selected').attr('language');
-         var input_language_field = $('input[name='+language_field+']');
+         var input_language_field = $('input[name='+ydcclib_language_field+']');
          if ( !input_language_field.val() || force ) {
             input_language_field.val(selected_language).triggerHandler('change');
          }
@@ -80,16 +74,9 @@ var completion_field = "";
 
          $('.yale-second-language-button-selected').removeClass('yale-second-language-button-selected');
          $(this).addClass('yale-second-language-button-selected');
-
-         //console.log('click!', language, form_name, project_id);
-         $.ajax({
-            method: 'POST',
-            url: ajaxService,
-            dataType: 'json',
-            data: { project_id: project_id, event_id: event_id, record: record_id, form_name: form_name, username: username, language:language, request: 'get-form-metadata'  }
-         }).done(function(data) {
-            console.log(data);
             var m, f, c;
+
+            var data = ydcclib_formTranslations[language];
 
             updateLanguageField( true );
 
@@ -127,13 +114,13 @@ var completion_field = "";
             // other fields
             for ( f=0; f < data.fields.length; f++ ){
                // labels
-               if ( data.fields[f].field_type == "descriptive" ) {
+               if ( data.fields[f].field_type === "descriptive" ) {
                   $('tr#'+data.fields[f].field_name+'-tr > td.labelrc').html(data.fields[f].field_label);
                } else {
                   $('label#label-' + data.fields[f].field_name + ' > table > tbody > tr:first > td:first').html(data.fields[f].field_label);
                   // value labels
                   for ( c=0; c < data.fields[f].field_choices.length; c++ ){
-                     if ( data.fields[f].field_type == "select" ) {
+                     if ( data.fields[f].field_type === "select" ) {
                         $('select[name=' + data.fields[f].field_name + '] > option[value=' + data.fields[f].field_choices[c].value+']').html(data.fields[f].field_choices[c].label);
                      } else {
                         $('label#label-' + data.fields[f].field_name + '-' + data.fields[f].field_choices[c].value).html(data.fields[f].field_choices[c].label);
@@ -142,16 +129,7 @@ var completion_field = "";
                }
             }
 
-
-         }).fail(function(jqXHR, textStatus, errorThrown) {
-            console.log(jqXHR);
-            alert('AJAX error: '+errorThrown);
-         }).always(function(){
-
          });
-
-      });
-
    }
 
 	$( document ).ready(function(){

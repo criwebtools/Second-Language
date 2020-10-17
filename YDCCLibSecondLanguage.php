@@ -15,6 +15,8 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
    public $message = "";
    public $project_id = 0;
    public $form_name = "";
+   private $formInitializationDataJSON = "";
+   private $formTranslationsJSON = "";
    private $super_user;
 
    use mysqlDb;
@@ -47,11 +49,20 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
 
    // data entry form prep
    function redcap_data_entry_form ( $project_id, $record, $instrument, $event_id, $group_id = NULL, $repeat_instance = 1 ) {
-      $this->form_name = $instrument;
-      $this->project_id = $project_id;
-      $js = file_get_contents($this->getModulePath() . 'js/ydcclib_form.js');
+
       if ( !$record ) $record = "";
       if ( !$event_id ) $event_id = 0;
+
+      $this->form_name = $instrument;
+
+      $this->project_id = $project_id;
+
+      $this->getFormInitializationDataJSON( $project_id, $instrument );
+
+      $this->getFormTranslationsJSON( $project_id, $record, $instrument, $event_id );
+
+      $js = file_get_contents($this->getModulePath() . 'js/ydcclib_form.js');
+
       ?>
       <link rel="stylesheet" type="text/css" href="<?php echo $this->getUrl("css/ydcclib.css?v=" . mt_rand(1, 32767)) ?>">
       <script type="text/javascript"><?php echo $this->preprocessJs($js, $record, $event_id) ?></script>
@@ -101,6 +112,8 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
       $t = str_replace('YDCCLIB_FORM_NAME', $this->form_name, $t);
       $t = str_replace('YDCCLIB_RECORD', $record, $t);
       $t = str_replace('YDCCLIB_EVENT_ID', $event_id, $t);
+      $t = str_replace('YDCCLIB_FORM_INITIALIZATION_DATA', $this->formInitializationDataJSON, $t);
+      $t = str_replace('YDCCLIB_FORM_TRANSLATIONS', $this->formTranslationsJSON, $t);
       return($t);
    }
 
@@ -218,6 +231,149 @@ WHERE project_id={$project_id_sql}
 
    }
 
+   private function getFormInitializationDataJSON( $project_id, $form_name ) {
+
+      $form_name_sql = $this->mysql_string( $form_name );
+      $project_id_sql = $this->mysql_string( $project_id );
+
+      $sql = "SELECT field_name
+FROM redcap_metadata
+WHERE project_id = {$project_id_sql}
+  AND form_name = {$form_name_sql}
+  AND misc LIKE '%@LANGUAGE%'";
+
+      $y = $this->fetchRecord( $sql );
+
+      if ( $y ) $language_field = $y['field_name'];
+      else $language_field = "";
+
+      $this->formInitializationDataJSON = json_encode( [
+         'languages' => $this->languages,
+         'language_field' => $language_field,
+         'completion_field' => $form_name . "_complete"
+      ] );
+
+   }
+
+   private function getFormTranslationsJSON($project_id, $record, $form_name, $event_id) {
+
+      $form_name_sql = $this->mysql_string( $form_name );
+      $project_id_sql = (int) $project_id;
+
+      $event_id = (int)$event_id;
+      if ( !$record ) $record = "";
+
+      $formTranslations = [];
+
+      $theLanguages = array_merge( array("primary"), $this->languages);
+
+      foreach ( $theLanguages as $language ) {
+
+         $language_sql = $this->mysql_string( $language );
+
+         $matrices = [];
+         $matrix_fields = [];
+         $fields = [];
+
+         $scripts = [];
+
+         $matrixSql = "
+SELECT m.xlat_entity_name AS `matrix_name`, m.`xlat_label` AS `matrix_header`, m.`xlat_choices` AS `matrix_choices`
+  , f.`xlat_entity_name` AS `field_name`, f.`xlat_label` AS `field_label`
+  , r.`field_order`, r.`element_type`
+FROM ydcclib_translations m
+  INNER JOIN ydcclib_translations f ON f.`project_id`=m.`project_id` AND f.`xlat_language`=m.`xlat_language` AND f.`xlat_entity_type`='field' AND f.`xlat_parent`=m.`xlat_entity_name` AND f.`deleted`=0
+  INNER JOIN redcap_metadata r ON r.`project_id`=m.`project_id` AND r.`field_name`=f.`xlat_entity_name`
+WHERE m.`project_id`={$project_id_sql}
+  AND m.`xlat_entity_type`='matrix'
+  AND m.`xlat_language` = {$language_sql}
+/*  AND m.`deleted`=0 */
+  AND r.`form_name` = {$form_name_sql}
+ORDER BY m.xlat_entity_name, r.`field_order`   
+   ";
+
+         $scripts[] = $matrixSql;
+
+         $mm = $this->fetchRecords($matrixSql);
+         $nMatrices = count($mm);
+         $BOR = true;
+         $EOR = false;
+         for ($i = 0; $i < $nMatrices; $i++) {
+            if ($BOR) {
+               $matrix_fields = [];
+               $BOR = false;
+               $EOR = false;
+            }
+            $matrix_fields[] = ['field_name' => $mm[$i]['field_name'], 'field_label' => $mm[$i]['field_label']];
+            if ($i == $nMatrices - 1) $EOR = true;
+            elseif ($mm[$i]['matrix_name'] != $mm[$i + 1]['matrix_name']) $EOR = true;
+            if ($EOR) {
+               $matrices[] = [
+                  'matrix_name' => $mm[$i]['matrix_name'],
+                  'matrix_header' => nl2br($mm[$i]['matrix_header']),
+                  'matrix_choices' => self::getChoices($mm[$i]['matrix_choices'], $mm[$i]['element_type']),
+                  'matrix_fields' => $matrix_fields
+               ];
+               $EOR = false;
+               $BOR = true;
+            }
+         }
+
+         $fieldSql = "
+SELECT f.`xlat_entity_name` AS `field_name`, f.`xlat_label` AS `field_label`, f.`xlat_choices` AS `field_choices`
+  , r.`field_order`, r.`element_type`, r.misc
+FROM ydcclib_translations f
+INNER JOIN redcap_metadata r ON r.`project_id`=f.`project_id` AND r.`field_name`=f.`xlat_entity_name`
+WHERE f.`project_id`={$project_id_sql}
+  AND r.`form_name` = {$form_name_sql}
+  AND f.`xlat_language`={$language_sql}
+  AND f.`xlat_entity_type` = 'field'
+  AND f.`xlat_parent` IS NULL
+  AND f.`deleted` = 0
+ORDER BY r.`field_order`   
+   ";
+
+         $scripts[] = $fieldSql;
+
+         $ff = $this->fetchRecords($fieldSql);
+         $language_field = "";
+         foreach ($ff as $f) {
+            $fields[] = [
+               'field_name' => $f['field_name']
+               //, 'field_label'=>nl2br($f['field_label'])
+               , 'field_label' => \Piping::replaceVariablesInLabel(nl2br($f['field_label']), $record, $event_id)
+               //, 'field_label'=>\Piping::replaceVariablesInLabel(nl2br($f['field_label'])."<br>".$record.":".$event_id)
+               , 'field_type' => $f['element_type']
+               , 'field_choices' => self::getChoices($f['field_choices'], $f['element_type'])
+            ];
+
+            if (stripos($f['misc'], '@LANGUAGE') !== false) $language_field = $f['field_name'];
+
+         }
+
+         $formTranslations[$language] = ['matrices'=>$matrices, 'fields'=>$fields, 'language_field'=>$language_field];
+      } // language
+
+      $this->formTranslationsJSON = json_encode( $formTranslations );
+
+   }
+
+   private static function getChoices( $element_enum, $element_type='' ){
+
+      if ( !$element_enum ) return array();
+
+      if ( $element_type==="calc" ) return array();
+
+      $element_enum = str_replace("\\n", "\n", $element_enum);
+      $parts = explode("\n", $element_enum);
+      $choices = array();
+      foreach ( $parts as $part ) {
+         $subparts = explode(",", $part, 2);
+         $choices[] = ['value'=>trim($subparts[0]), 'label'=>trim($subparts[1])];
+      }
+      return($choices);
+   }
+
    private function getEndpointApiUrl( $host ){
       if ( substr($host, -1) !== "/" ) $host .= "/";
       return $host . "api/?type=module&prefix=ydcclib_second_language&page=plugins/get_translations&NOAUTH";
@@ -294,11 +450,10 @@ WHERE project_id={$project_id_sql}
    }
 
    public function get_unique_backup_id() {
-      global $module;
 
       $xlat_backup_id_root = strftime("%Y-%m-%d");
 
-      $xlat_backup_id_index = $module->fetchRecord( "
+      $xlat_backup_id_index = $this->fetchRecord( "
 SELECT 1+IFNULL(MAX(SUBSTR(xlat_backup_id, -3)),0) AS xlat_backup_id_index
 FROM ydcclib_translations
 WHERE deleted=1 AND LENGTH(xlat_backup_id)=14
