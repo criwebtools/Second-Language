@@ -1,7 +1,7 @@
 # Change Log
 The change log for the Yale Second Language external module.  
-Pete Charpentier  
-peter.charpentier@yale.edu
+Pete Charpentier, CRI Web Tools LLC
+criwebtools@gmail.com
 
 ## [1.0.0] - 2020-10-01
 ### Initial Release
@@ -12,3 +12,8 @@ Resolved the issue of REDCap's failure to detect
 simultaneous users, caused by AJAX calls being
 misinterpreted as navigation off form. Form support
 is now entirely client-side.
+
+## [1.0.2] - 2021-07-05
+
+Added code to prevent PHP 8 exceptions thrown
+when count() is passed a null argument.

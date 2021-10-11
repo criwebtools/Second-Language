@@ -118,10 +118,13 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
    }
 
    private function getLanguages() {
-      $langs = $this->getProjectSetting('ydcclib-language');
       $this->languages = [];
-      for ( $i=0; $i<count($langs); $i++){
-         $this->languages[] = strtolower($langs[$i]);
+      // v1.0.1 fix to prevent exception in PHP 8
+      $langs = $this->getProjectSetting('ydcclib-language');
+      if ( $langs ) {
+         for ($i = 0; $i < count($langs); $i++) {
+            $this->languages[] = strtolower($langs[$i]);
+         }
       }
       /*
        * BREAKS IN FRAMEWORK 5:
@@ -295,27 +298,29 @@ ORDER BY m.xlat_entity_name, r.`field_order`
          $scripts[] = $matrixSql;
 
          $mm = $this->fetchRecords($matrixSql);
-         $nMatrices = count($mm);
-         $BOR = true;
-         $EOR = false;
-         for ($i = 0; $i < $nMatrices; $i++) {
-            if ($BOR) {
-               $matrix_fields = [];
-               $BOR = false;
-               $EOR = false;
-            }
-            $matrix_fields[] = ['field_name' => $mm[$i]['field_name'], 'field_label' => $mm[$i]['field_label']];
-            if ($i == $nMatrices - 1) $EOR = true;
-            elseif ($mm[$i]['matrix_name'] != $mm[$i + 1]['matrix_name']) $EOR = true;
-            if ($EOR) {
-               $matrices[] = [
-                  'matrix_name' => $mm[$i]['matrix_name'],
-                  'matrix_header' => nl2br($mm[$i]['matrix_header']),
-                  'matrix_choices' => self::getChoices($mm[$i]['matrix_choices'], $mm[$i]['element_type']),
-                  'matrix_fields' => $matrix_fields
-               ];
-               $EOR = false;
-               $BOR = true;
+         if ( $mm ){
+            $nMatrices = count($mm);
+            $BOR = true;
+            $EOR = false;
+            for ($i = 0; $i < $nMatrices; $i++) {
+               if ($BOR) {
+                  $matrix_fields = [];
+                  $BOR = false;
+                  $EOR = false;
+               }
+               $matrix_fields[] = ['field_name' => $mm[$i]['field_name'], 'field_label' => $mm[$i]['field_label']];
+               if ($i == $nMatrices - 1) $EOR = true;
+               elseif ($mm[$i]['matrix_name'] != $mm[$i + 1]['matrix_name']) $EOR = true;
+               if ($EOR) {
+                  $matrices[] = [
+                     'matrix_name' => $mm[$i]['matrix_name'],
+                     'matrix_header' => nl2br($mm[$i]['matrix_header']),
+                     'matrix_choices' => self::getChoices($mm[$i]['matrix_choices'], $mm[$i]['element_type']),
+                     'matrix_fields' => $matrix_fields
+                  ];
+                  $EOR = false;
+                  $BOR = true;
+               }
             }
          }
 

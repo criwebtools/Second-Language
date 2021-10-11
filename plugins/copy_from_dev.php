@@ -175,6 +175,10 @@ if ( $devOnSameHost==="Y" ){
 function get_matching_field_count($fields){
    global $module;
 
+   if ( !$fields ){
+      return 0;
+   }
+
    $project_id_sql = (int)$module->project_id;
 
    $field_count = count($fields);

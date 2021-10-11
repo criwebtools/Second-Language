@@ -157,27 +157,29 @@ ORDER BY m.xlat_entity_name, r.`field_order`
    $scripts[] = $matrixSql;
 
    $mm = $module->fetchRecords( $matrixSql );
-   $nMatrices = count($mm);
-   $BOR = true;
-   $EOR = false;
-   for ($i = 0; $i < $nMatrices; $i++) {
-      if ( $BOR ){
-         $matrix_fields = [];
-         $BOR = false;
-         $EOR = false;
-      }
-      $matrix_fields[] = ['field_name'=>$mm[$i]['field_name'], 'field_label'=>$mm[$i]['field_label']];
-      if ( $i == $nMatrices-1 ) $EOR = true;
-      elseif ( $mm[$i]['matrix_name'] != $mm[$i+1]['matrix_name'] ) $EOR = true;
-      if ( $EOR ){
-         $matrices[] = [
-            'matrix_name'=>$mm[$i]['matrix_name'],
-            'matrix_header'=>nl2br($mm[$i]['matrix_header']),
-            'matrix_choices'=>getChoices($mm[$i]['matrix_choices'], $mm[$i]['element_type']),
-            'matrix_fields'=>$matrix_fields
-         ];
-         $EOR = false;
-         $BOR = true;
+   if ( $mm ) {
+      $nMatrices = count($mm);
+      $BOR = true;
+      $EOR = false;
+      for ($i = 0; $i < $nMatrices; $i++) {
+         if ($BOR) {
+            $matrix_fields = [];
+            $BOR = false;
+            $EOR = false;
+         }
+         $matrix_fields[] = ['field_name' => $mm[$i]['field_name'], 'field_label' => $mm[$i]['field_label']];
+         if ($i == $nMatrices - 1) $EOR = true;
+         elseif ($mm[$i]['matrix_name'] != $mm[$i + 1]['matrix_name']) $EOR = true;
+         if ($EOR) {
+            $matrices[] = [
+               'matrix_name' => $mm[$i]['matrix_name'],
+               'matrix_header' => nl2br($mm[$i]['matrix_header']),
+               'matrix_choices' => getChoices($mm[$i]['matrix_choices'], $mm[$i]['element_type']),
+               'matrix_fields' => $matrix_fields
+            ];
+            $EOR = false;
+            $BOR = true;
+         }
       }
    }
 
