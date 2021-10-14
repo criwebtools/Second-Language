@@ -6,7 +6,9 @@
 
 namespace YDCCLib\YDCCLibSecondLanguage;
 
-require_once "traits/traitMySQLfunctions.php"; // useful query and escape functions
+require "autoload.php";
+
+use Yale\Yes3\Yes3Fn;
 
 class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
 
@@ -17,21 +19,38 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
    public $form_name = "";
    private $formInitializationDataJSON = "";
    private $formTranslationsJSON = "";
-   private $super_user;
-
-   use mysqlDb;
+   private $super_user = 0;
 
    public function __construct() {
       parent::__construct();
 
-      // project-context initializations
-      if ( defined('PROJECT_ID') ) {
-         $this->get_login_user();
-         $this->project_id = PROJECT_ID;
+      if ( defined('SUPER_USER') ){
          $this->super_user = SUPER_USER;
+      }
+
+      if ( defined('USERID') ) {
+         $this->get_login_user();
+      }
+
+      // project-context initializations
+       if ( defined('PROJECT_ID') ) {
+         $this->project_id = PROJECT_ID;
          $this->getLanguages();
+         if ( !$this->getProjectSetting('primary-language')){
+            $this->setPrimaryLanguage("");
+         }
       }
    }
+
+   public function setPrimaryLanguage(string $languageName): string
+   {
+      if ( !$languageName ){
+         $languageName = Yes3Fn::fetchValue("SELECT project_language FROM redcap_projects WHERE project_id=?", [$this->project_id]);
+      }
+      $this->setProjectSetting('primary-language', $languageName);
+      return $languageName;
+   }
+
    /*
     * HOOKS
     */
@@ -107,13 +126,14 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
       $t = str_replace('YDCCLIB_AJAX_URL', $this->getUrl("ajax/ydcclib_services.php?pid=".$this->project_id ), $js);
       $t = str_replace('YDCCLIB_CLOSE_BUTTON_IMAGE_URL', $this->getUrl("images/close-button.png"), $t);
       $t = str_replace('YDCCLIB_CSS_URL', $this->getUrl("css/ydcclib.css"), $t);
-      $t = str_replace('YDCCLIB_PROJECT_ID', $this->project_id, $t);
+      $t = str_replace('YDCCLIB_PROJECT_ID', (string)$this->project_id, $t);
       $t = str_replace('YDCCLIB_USERNAME', $this->login_user['username'], $t);
       $t = str_replace('YDCCLIB_FORM_NAME', $this->form_name, $t);
       $t = str_replace('YDCCLIB_RECORD', $record, $t);
       $t = str_replace('YDCCLIB_EVENT_ID', $event_id, $t);
       $t = str_replace('YDCCLIB_FORM_INITIALIZATION_DATA', $this->formInitializationDataJSON, $t);
       $t = str_replace('YDCCLIB_FORM_TRANSLATIONS', $this->formTranslationsJSON, $t);
+      $t = str_replace('YDCCLIB_PRIMARY_LANGUAGE_NAME', $this->getProjectSetting('primary-language'), $t);
       return($t);
    }
 
@@ -136,8 +156,8 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
    }
 
    public function getProjectName( $project_id ){
-      return $this->fetchRecord(
-            "SELECT project_name, app_title FROM redcap_projects WHERE project_id=".$this->mysql_string($project_id)
+      return Yes3Fn::fetchRecord(
+            "SELECT project_name, app_title FROM redcap_projects WHERE project_id=".Yes3Fn::sql_string($project_id)
       )['app_title'];
    }
 
@@ -147,9 +167,9 @@ class YDCCLibSecondLanguage extends \ExternalModules\AbstractExternalModule {
 SELECT LOWER(u.`username`) AS `username`, u.`user_lastname`, u.`user_firstname`, CONCAT(u.`user_firstname`, ' ', u.`user_lastname`) as user_fullname
   , u.`user_email`
 FROM redcap_user_information u
-WHERE LOWER(u.`username`)='".strtolower(USERID)."'";
+WHERE LOWER(u.`username`)='".strtolower(Yes3Fn::getREDCapUserId())."'";
       ;
-      $this->login_user = $this->fetchRecord($sql);
+      $this->login_user = Yes3Fn::fetchRecord($sql);
    }
 
    /*
@@ -168,7 +188,7 @@ WHERE LOWER(u.`username`)='".strtolower(USERID)."'";
     */
    public function getProjectAndUserFromToken( $token ){
 
-      $token_sql = $this->mysql_string( $token );
+      $token_sql = Yes3Fn::sql_string( $token );
 
       $sql = "
 SELECT u.`project_id`, u.`username`
@@ -180,7 +200,7 @@ WHERE u.`api_token`={$token_sql}
   AND (r.`api_export`<=>1 OR u.`api_export`<=>1 OR ui.`super_user`<=>1)       
       ";
 
-      $y = $this->fetchRecord($sql);
+      $y = Yes3Fn::fetchRecord($sql);
 
       if ( !$y ) return ['project_id'=>0, 'username'=>""];
       else return $y;
@@ -191,11 +211,11 @@ WHERE u.`api_token`={$token_sql}
     */
    public function getTranslationsForProject( $project_id, $count_only=0 ){
 
-      $project_id_sql = $this->mysql_string($project_id);
+      $project_id_sql = Yes3Fn::sql_string($project_id);
 
       $project_name = $this->getProjectName( $project_id );
 
-      $fields = $this->fetchRecords("
+      $fields = Yes3Fn::fetchRecords("
 SELECT DISTINCT xlat_entity_name AS `field_name` FROM ydcclib_translations
 WHERE project_id={$project_id_sql}
   AND xlat_entity_type = 'field'
@@ -203,7 +223,7 @@ WHERE project_id={$project_id_sql}
   AND deleted=0    
         ");
 
-      $count = $this->fetchRecord("
+      $count = Yes3Fn::fetchRecord("
 SELECT COUNT(*) AS `count` FROM ydcclib_translations 
 WHERE project_id={$project_id_sql}
   AND xlat_entity_type = 'field'
@@ -217,7 +237,7 @@ WHERE project_id={$project_id_sql}
 
       } else {
 
-         $translations = $this->fetchRecords( "
+         $translations = Yes3Fn::fetchRecords( "
 SELECT * FROM ydcclib_translations 
 WHERE project_id={$project_id_sql}
   AND deleted=0
@@ -236,8 +256,8 @@ WHERE project_id={$project_id_sql}
 
    private function getFormInitializationDataJSON( $project_id, $form_name ) {
 
-      $form_name_sql = $this->mysql_string( $form_name );
-      $project_id_sql = $this->mysql_string( $project_id );
+      $form_name_sql = Yes3Fn::sql_string( $form_name );
+      $project_id_sql = Yes3Fn::sql_string( $project_id );
 
       $sql = "SELECT field_name
 FROM redcap_metadata
@@ -245,7 +265,7 @@ WHERE project_id = {$project_id_sql}
   AND form_name = {$form_name_sql}
   AND misc LIKE '%@LANGUAGE%'";
 
-      $y = $this->fetchRecord( $sql );
+      $y = Yes3Fn::fetchRecord( $sql );
 
       if ( $y ) $language_field = $y['field_name'];
       else $language_field = "";
@@ -260,7 +280,7 @@ WHERE project_id = {$project_id_sql}
 
    private function getFormTranslationsJSON($project_id, $record, $form_name, $event_id) {
 
-      $form_name_sql = $this->mysql_string( $form_name );
+      $form_name_sql = Yes3Fn::sql_string( $form_name );
       $project_id_sql = (int) $project_id;
 
       $event_id = (int)$event_id;
@@ -272,13 +292,13 @@ WHERE project_id = {$project_id_sql}
 
       foreach ( $theLanguages as $language ) {
 
-         $language_sql = $this->mysql_string( $language );
+         $language_sql = Yes3Fn::sql_string( $language );
 
          $matrices = [];
          $matrix_fields = [];
          $fields = [];
 
-         $scripts = [];
+         //$scripts = [];
 
          $matrixSql = "
 SELECT m.xlat_entity_name AS `matrix_name`, m.`xlat_label` AS `matrix_header`, m.`xlat_choices` AS `matrix_choices`
@@ -295,9 +315,9 @@ WHERE m.`project_id`={$project_id_sql}
 ORDER BY m.xlat_entity_name, r.`field_order`   
    ";
 
-         $scripts[] = $matrixSql;
+         //$scripts[] = $matrixSql;
 
-         $mm = $this->fetchRecords($matrixSql);
+         $mm = Yes3Fn::fetchRecords($matrixSql);
          if ( $mm ){
             $nMatrices = count($mm);
             $BOR = true;
@@ -338,9 +358,9 @@ WHERE f.`project_id`={$project_id_sql}
 ORDER BY r.`field_order`   
    ";
 
-         $scripts[] = $fieldSql;
+         //$scripts[] = $fieldSql;
 
-         $ff = $this->fetchRecords($fieldSql);
+         $ff = Yes3Fn::fetchRecords($fieldSql);
          $language_field = "";
          foreach ($ff as $f) {
             $fields[] = [
@@ -405,7 +425,7 @@ ORDER BY r.`field_order`
       curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
       curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
 
-      $response = curl_exec($ch);
+      $response = (string)curl_exec($ch);
 
       if (curl_errno($ch)) {
          $error_message = curl_error($ch);
@@ -450,6 +470,7 @@ ORDER BY r.`field_order`
    }
 
    function isJson($string) {
+      // psalm reports a 'not used' error but 'tis okay
       json_decode($string);
       return (json_last_error() == JSON_ERROR_NONE);
    }
@@ -458,12 +479,14 @@ ORDER BY r.`field_order`
 
       $xlat_backup_id_root = strftime("%Y-%m-%d");
 
-      $xlat_backup_id_index = $this->fetchRecord( "
-SELECT 1+IFNULL(MAX(SUBSTR(xlat_backup_id, -3)),0) AS xlat_backup_id_index
-FROM ydcclib_translations
-WHERE deleted=1 AND LENGTH(xlat_backup_id)=14
-AND xlat_backup_id LIKE '{$xlat_backup_id_root}%';   
-   ")['xlat_backup_id_index'];
+      $sql = "
+      SELECT 1+IFNULL(MAX(SUBSTR(xlat_backup_id, -3)),0) AS xlat_backup_id_index
+      FROM ydcclib_translations
+      WHERE deleted=1 AND LENGTH(xlat_backup_id)=14
+      AND xlat_backup_id LIKE '{$xlat_backup_id_root}%'
+      ";
+
+      $xlat_backup_id_index = Yes3Fn::fetchRecord($sql)['xlat_backup_id_index'];
 
       return $xlat_backup_id_root . "." . str_pad($xlat_backup_id_index, 3, '0', STR_PAD_LEFT);
    }
@@ -472,7 +495,7 @@ AND xlat_backup_id LIKE '{$xlat_backup_id_root}%';
    public function get_create_table_sql() {
 
       // collation should match the metadata table
-      $collation = $this->fetchRecord("
+      $collation = Yes3Fn::fetchRecord("
          SELECT TABLE_COLLATION 
 FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = 'redcap_metadata'

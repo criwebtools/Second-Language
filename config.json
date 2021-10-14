@@ -13,7 +13,7 @@
     {
       "1.0.0": "2020-10-01: Initial production version",
       "1.0.1": "2020-11-10: Reliance on AJAX calls from hooks removed as they were blocking detection of simulataneous sessions",
-      "1.0.2": "2020-07-05: PHP 8 compatibility: Code added to prevent count() being passed a null argument"
+      "1.1.0": "2020-10-14: Refactored to PHP7.2 complatibility. Code added to prevent count() being passed a null argument (PHP8 fatal error). New setting: primary language name."
     }
   ],
   "permissions": [
@@ -36,6 +36,13 @@
     ]
   },
   "project-settings": [
+    {
+      "key": "primary-language",
+      "name": "Primary Language Label",
+      "required": false,
+      "type": "text",
+      "repeatable": false
+    },
     {
       "key": "ydcclib-language",
       "name": "Language (in addition to the primary language)",
@@ -133,7 +140,7 @@
     "plugins/get_translations"
   ],
   "compatibility": {
-    "php-version-min": "5.6",
+    "php-version-min": "7.2.24",
     "redcap-version-min": "9.1.23"
   }
 

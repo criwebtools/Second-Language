@@ -12,6 +12,8 @@ if ( class_exists('YDCCLib\YDCCLibSecondLanguage\YDCCLibSecondLanguage') ) {
    exit("Could not instantiate the Second Language class!");
 }
 
+use Yale\Yes3\Yes3Fn;
+
 $username = $module->login_user['username'];
 
 if ( $request == "get-languages" ) exit( get_languages() );
@@ -21,7 +23,7 @@ elseif ( $request == "get-xlat-records" ) exit( get_xlat_records() );
 elseif ( $request == "get-form-metadata" ) exit( get_form_metadata() );
 elseif ( $request == "get-initialization-data" ) exit( get_initialization_data() );
 elseif ( $request == "copy-translations" ) exit( copy_translations() );
-else exit("bad request");
+//else exit("bad request");
 
 function copy_translations(){
    global $module;
@@ -32,9 +34,9 @@ function copy_translations(){
    $devProjectApiToken = $module->getProjectSetting('devprojectapitoken');
    $devProjectId       = $module->getProjectSetting('devprojectid');
 
-   $project_id_sql = $module->mysql_string($module->project_id);
+   $project_id_sql = Yes3Fn::sql_string($module->project_id);
 
-   $response = null;
+   $response = [];
 
    if ( $projectType==="P" && $devOnSameHost==="N" && $devProjectHost && $devProjectApiToken ) {
 
@@ -71,16 +73,16 @@ function copy_translations(){
 
       $vSql .= "(";
       $vSql .= $project_id_sql;
-      $vSql .= "," . $module->mysql_string($t['xlat_language']);
-      $vSql .= "," . $module->mysql_string($t['xlat_parent']);
-      $vSql .= "," . $module->mysql_string($t['xlat_entity_type']);
-      $vSql .= "," . $module->mysql_string($t['xlat_entity_name']);
-      $vSql .= "," . $module->mysql_string($t['xlat_label']);
-      $vSql .= "," . $module->mysql_string($t['xlat_choices']);
-      $vSql .= "," . $module->mysql_string($t['xlat_created_by']);
-      $vSql .= "," . $module->mysql_string($t['xlat_created_on']);
-      $vSql .= "," . $module->mysql_string($t['xlat_modified_by']);
-      $vSql .= "," . $module->mysql_string($t['xlat_modified_on']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_language']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_parent']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_entity_type']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_entity_name']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_label']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_choices']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_created_by']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_created_on']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_modified_by']);
+      $vSql .= "," . Yes3Fn::sql_string($t['xlat_modified_on']);
       $vSql .= ")";
 
       $translated++;
@@ -126,9 +128,9 @@ insert into `ydcclib_translations`(
 function get_form_metadata() {
    global $module;
 
-   $language = $module->mysql_string( $_POST['language'] );
-   $form_name = $module->mysql_string( $_POST['form_name'] );
-   $project_id = $module->mysql_string( $_POST['project_id'] );
+   $language = Yes3Fn::sql_string( $_POST['language'] );
+   $form_name = Yes3Fn::sql_string( $_POST['form_name'] );
+   $project_id = Yes3Fn::sql_string( $_POST['project_id'] );
 
    if ( isset($_POST['event_id']) ) $event_id = (int)$_POST['event_id']; else $event_id = 0;
    if ( isset($_POST['record']) ) $record = $_POST['record']; else $record = "";
@@ -137,7 +139,7 @@ function get_form_metadata() {
    $matrix_fields = [];
    $fields = [];
 
-   $scripts = [];
+   //$scripts = [];
 
    $matrixSql = "
 SELECT m.xlat_entity_name AS `matrix_name`, m.`xlat_label` AS `matrix_header`, m.`xlat_choices` AS `matrix_choices`
@@ -154,9 +156,9 @@ WHERE m.`project_id`={$project_id}
 ORDER BY m.xlat_entity_name, r.`field_order`   
    ";
 
-   $scripts[] = $matrixSql;
+   //$scripts[] = $matrixSql;
 
-   $mm = $module->fetchRecords( $matrixSql );
+   $mm = Yes3Fn::fetchRecords( $matrixSql );
    if ( $mm ) {
       $nMatrices = count($mm);
       $BOR = true;
@@ -197,9 +199,9 @@ WHERE f.`project_id`={$project_id}
 ORDER BY r.`field_order`   
    ";
 
-   $scripts[] = $fieldSql;
+   //$scripts[] = $fieldSql;
 
-   $ff = $module->fetchRecords( $fieldSql );
+   $ff = Yes3Fn::fetchRecords( $fieldSql );
    $language_field = "";
    foreach ( $ff as $f ){
       $fields[] = [
@@ -214,7 +216,6 @@ ORDER BY r.`field_order`
       if ( stripos($f['misc'], '@LANGUAGE') !== false ) $language_field = $f['field_name'];
 
    }
-
 
    return json_encode(['matrices'=>$matrices, 'fields'=>$fields, 'language_field'=>$language_field]);
 }
@@ -244,8 +245,8 @@ function get_initialization_data() {
    global $module;
 
    $form_name = $_POST['form_name'];
-   $form_name_sql = $module->mysql_string( $form_name );
-   $project_id_sql = $module->mysql_string( $_POST['project_id'] );
+   $form_name_sql = Yes3Fn::sql_string( $form_name );
+   $project_id_sql = Yes3Fn::sql_string( $_POST['project_id'] );
 
    $sql = "SELECT field_name
 FROM redcap_metadata
@@ -253,7 +254,7 @@ WHERE project_id = {$project_id_sql}
   AND form_name = {$form_name_sql}
   AND misc LIKE '%@LANGUAGE%'";
 
-   $y = $module->fetchRecord( $sql );
+   $y = Yes3Fn::fetchRecord( $sql );
 
    if ( $y ) $language_field = $y['field_name'];
    else $language_field = "";
@@ -270,10 +271,12 @@ function save_xlat_records() {
    global $project_id;
    global $username;
 
-   $username_sql = $module->mysql_string($username);
-   $timestamp = $module->mysql_timestamp_string();
+   $username_sql = Yes3Fn::sql_string($username);
+   $timestamp = Yes3Fn::sql_timestamp_string();
 
    $records = $_POST['queue'];
+
+   $scripts = [];
 
    $n = 0;
    $e = 0;
@@ -282,17 +285,17 @@ function save_xlat_records() {
 
       $n++;
 
-      $xlat_language = $module->mysql_string($record['xlat_language']);
-      $xlat_parent = $module->mysql_string($record['xlat_parent']);
-      $xlat_entity_type = $module->mysql_string($record['xlat_entity_type']);
-      $xlat_entity_name = $module->mysql_string($record['xlat_entity_name']);
-      $xlat_label = $module->mysql_string($record['xlat_label']);
-      $xlat_choices = $module->mysql_string($record['xlat_choices']);
+      $xlat_language = Yes3Fn::sql_string($record['xlat_language']);
+      $xlat_parent = Yes3Fn::sql_string($record['xlat_parent']);
+      $xlat_entity_type = Yes3Fn::sql_string($record['xlat_entity_type']);
+      $xlat_entity_name = Yes3Fn::sql_string($record['xlat_entity_name']);
+      $xlat_label = Yes3Fn::sql_string($record['xlat_label']);
+      $xlat_choices = Yes3Fn::sql_string($record['xlat_choices']);
 
-      $scripts = array();
+      $scripts = [];
 
       $sqlfetch = "SELECT xlat_id FROM ydcclib_translations WHERE project_id={$project_id} AND xlat_language={$xlat_language} AND xlat_entity_type={$xlat_entity_type} AND xlat_entity_name={$xlat_entity_name} AND `deleted`=0";
-      $y = $module->fetchRecord($sqlfetch);
+      $y = Yes3Fn::fetchRecord($sqlfetch);
       if ( $y['xlat_id'] ) {
 
          $sql = "UPDATE ydcclib_translations SET"
@@ -310,7 +313,7 @@ function save_xlat_records() {
             . ", {$username_sql}, {$timestamp})";
       }
 
-      $rc = $module->query($sql);
+      $rc = Yes3Fn::query($sql);
 
       if ( $rc != 1 ) $e++;
    }
@@ -322,7 +325,7 @@ function get_xlat_records() {
    global $module;
    global $project_id;
 
-   $field_name = $module->mysql_string($_POST['field_name']);
+   $field_name = Yes3Fn::sql_string($_POST['field_name']);
 
    $sql = "
 SELECT x.`xlat_entity_name`, x.`xlat_language`, x.`xlat_label`, x.`xlat_choices`
@@ -335,7 +338,7 @@ WHERE x.`project_id`={$project_id}
 ORDER BY x.`xlat_language`
    ";
 
-   $yy = $module->fetchRecords($sql);
+   $yy = Yes3Fn::fetchRecords($sql);
 
    return( json_encode($yy) );
 }
@@ -344,7 +347,7 @@ function get_xlat_matrix_records() {
    global $module;
    global $project_id;
 
-   $grid_name = $module->mysql_string($_POST['grid_name']);
+   $grid_name = Yes3Fn::sql_string($_POST['grid_name']);
 
    $sql = "
 SELECT x.`xlat_entity_type`, x.`xlat_entity_name`, x.`xlat_language`, x.`xlat_label`, x.`xlat_choices`
@@ -356,7 +359,7 @@ WHERE x.`project_id`={$project_id}
 ORDER BY x.`xlat_entity_type`, x.`xlat_entity_name`, x.`xlat_language`   
    ";
 
-   $yy = $module->fetchRecords($sql);
+   $yy = Yes3Fn::fetchRecords($sql);
 
    return( json_encode($yy) );
 }

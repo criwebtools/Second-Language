@@ -17,3 +17,11 @@ is now entirely client-side.
 
 Added code to prevent PHP 8 exceptions thrown
 when count() is passed a null argument.
+
+## [1.1.0] - 2021-10-14
+
+Refactored to PHP 7.2 compatibility level.
+Added new setting: primary language name. This
+is displayed instead of "primary" on
+the primary language button on the data
+collection form.

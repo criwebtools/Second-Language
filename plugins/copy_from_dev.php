@@ -12,6 +12,8 @@ if ( isset($_POST['count_only']) ) {
 
 $module = new YDCCLib\YDCCLibSecondLanguage\YDCCLibSecondLanguage();
 
+use Yale\Yes3\Yes3Fn;
+
 $HtmlPage = new HtmlPage();
 $HtmlPage->ProjectHeader();
 
@@ -119,10 +121,6 @@ if ( $devOnSameHost==="Y" ){
       width: 160px;
    }
 
-   .ydcclib-data-cell {
-
-   }
-
    table.ydcclib-xlat-parms tr.ydcclib-odd {
       background-color: #efefef;
    }
@@ -192,7 +190,7 @@ function get_matching_field_count($fields){
          $field_list .= "'" . $field['field_name'] . "'";
       }
       return
-         $module->fetchRecord("
+         Yes3Fn::fetchRecord("
 SELECT COUNT(*) AS matching_field_count 
 FROM redcap_metadata
 WHERE project_id = {$project_id_sql}

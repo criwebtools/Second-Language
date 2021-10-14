@@ -1,18 +1,20 @@
 # Second Language External Module
-Version 1.0.0   
-October 2020  
+Version 1.1.0   
+October 2021  
 Pete Charpentier and the REDCap@Yale team  
 https://portal.redcap.yale.edu  
 
 > Tested on:
-> - REDCap versions 9.1.23, 10.2.3
+> - REDCap versions 9.1.23, 10.2.3, 11.2.2
 > - MariaDb 10.0.28, 10.1.44
-> - MySQL 5.1.73
-> - PHP 5.6.37, 7.0.33, 7.1.20, 7.2.32
+> - MySQL 5.1.73, 8.0.26
+> - PHP 5.6.37, 7.0.33, 7.1.20, 7.2.32, 7.4.24
 
 ### What does it do?
 The Second Language EM supports multiple languages for REDCap forms.
 It is similar to Multilingual, but more basic and designer-friendly.
+Second Language is intended for staff-administered inperson
+or telephone interviews, and is not recommended for self completed surveys.
 
 ### Features
 - Any number of languages can be supported.

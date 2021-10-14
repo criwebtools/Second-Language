@@ -85,7 +85,7 @@
          // if newly visible then do stuff
          if ( !fieldEditorIsVisible ) {
             fieldEditorIsVisible = true;
-            console.log("Field editor just popped up");
+            //console.log("Field editor just popped up");
             setTimeout(insertFieldEditorExtensions, 500);
          }
       } else {
@@ -93,7 +93,7 @@
             fieldEditorIsVisible = false;
             fieldEditorSaveHandlerBound = false; // the binding appears to be removed when ui dialog is reopened, even if save button object persists
             removeEditorExtensions();
-            console.log("Field editor just closed");
+            //console.log("Field editor just closed");
          }
       }
       return( fieldEditorIsVisible );
@@ -105,14 +105,14 @@
          // if newly visible then do stuff
          if ( !matrixEditorIsVisible ) {
             matrixEditorIsVisible = true;
-           console.log("Matrix editor just popped up");
+           //console.log("Matrix editor just popped up");
             setTimeout(insertMatrixEditorExtensions, 500);
          }
       } else {
          if ( matrixEditorIsVisible ) {
             matrixEditorIsVisible = false;
             removeEditorExtensions();
-            console.log("Matrix editor just closed");
+            //console.log("Matrix editor just closed");
          }
       }
       return( fieldEditorIsVisible );
@@ -232,7 +232,7 @@
    function cloneMatrixLabels() {
       $(".field_labelmatrix").each(function( index ) {
          var theClone;
-         console.log( "cloneMatrixLabels", index, $(this).val() );
+         //console.log( "cloneMatrixLabels", index, $(this).val() );
          for (var i = languages.length-1; i >= 0; i-- ) {
             theClone = $(this).clone();
             theClone
@@ -337,7 +337,7 @@
    function saveXlatRecord() {
 	   var parms = {request:'save-xlat-record', project_id:project_id, queue:xlatQueue};
 
-	   console.log('saveXlatRecord queue:', xlatQueue);
+	   //console.log('saveXlatRecord queue:', xlatQueue);
 
       $.ajax({
          method: 'POST',
@@ -346,7 +346,7 @@
          data: parms,
          cache: false
       }).done(function(data) {
-         console.log(data); // the rc are the success and error counts
+         //console.log(data); // the rc are the success and error counts
       }).fail(function(jqXHR, textStatus, errorThrown) {
          //alert('AJAX error: '+errorThrown);
          console.log(jqXHR);
@@ -366,7 +366,7 @@
          data: parms,
          cache: false
       }).done(function(data) {
-         console.log(data); // the rc are the success and error counts
+         //console.log(data); // the rc are the success and error counts
          var x = {};
          var elemFieldNames;
          var elemFieldName;
@@ -395,7 +395,7 @@
          data: parms,
          cache: false
       }).done(function(data) {
-         console.log(data); // the rc are the success and error counts
+         //console.log(data); // the rc are the success and error counts
          var x = {};
          var elemFieldNames;
          var elemFieldName;
@@ -424,7 +424,7 @@
    }
 
 	$( document ).ready(function(){
-      console.log('Second Language READY', project_id, username, url, languages);
+      //console.log('Second Language READY', project_id, username, url, languages);
 		getLanguagesAndStartMonitoring();
 	});
 

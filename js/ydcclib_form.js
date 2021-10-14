@@ -15,7 +15,7 @@ var ydcclib_formTranslations = YDCCLIB_FORM_TRANSLATIONS;
 
 	function initialize() {
 
-      console.log(initializationData);
+      //console.log(initializationData);
 
       initializationData.languages.forEach(function(item){
          theLanguages.push(item);
@@ -53,16 +53,25 @@ var ydcclib_formTranslations = YDCCLIB_FORM_TRANSLATIONS;
       }
    }
 
+   function toTitleCase(str) {
+      return str.replace(
+        /\w\S*/g,
+        function(txt) {
+          return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        }
+      );
+    }
+
    function insertLanguageButtonSection() {
 
       var langBtnHtml = "<div class='yale-second-language-button-section'>";
 
       //langBtnHtml += "<div class='yale-second-language-button' onclick='displayLanguage(\"primary\");'>primary</div>";
-      langBtnHtml += "<div class='yale-second-language-button yale-second-language-button-selected' language='primary'>primary</div>";
+      langBtnHtml += "<div class='yale-second-language-button yale-second-language-button-selected' language='primary'>YDCCLIB_PRIMARY_LANGUAGE_NAME</div>";
 
       for ( var i=0; i<theLanguages.length; i++ ) {
          //langBtnHtml += "<div class='yale-second-language-button' onclick='displayLanguage(\""+theLanguages[i]+"\");'>"+theLanguages[i]+"</div>";
-         langBtnHtml += "<div class='yale-second-language-button' language='"+theLanguages[i]+"'>"+theLanguages[i]+"</div>";
+         langBtnHtml += "<div class='yale-second-language-button' language='"+theLanguages[i]+"'>"+toTitleCase(theLanguages[i])+"</div>";
       }
 
       langBtnHtml += "</div>";

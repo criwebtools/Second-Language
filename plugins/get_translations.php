@@ -1,10 +1,7 @@
 <?php
 
-$dev_project_id = 0;
 
-if ( class_exists('YDCCLib\YDCCLibSecondLanguage\YDCCLibSecondLanguage') ) {
-   $module = new YDCCLib\YDCCLibSecondLanguage\YDCCLibSecondLanguage();
-} else {
+if ( !class_exists('YDCCLib\YDCCLibSecondLanguage\YDCCLibSecondLanguage') ) {
    badOutcome("Could not instantiate the Second Language class!");
 }
 
@@ -19,7 +16,15 @@ if ( !isset($_POST['token']) ) {
    badOutcome( "No token supplied." );
 }
 
-if ( !$dev_project_id = $module->getProjectAndUserFromToken($_POST['token'])['project_id'] ) {
+$token = ( isset($_POST['token']) ) ? $_POST['token'] : "";
+
+if ( !$token ){
+   badOutcome("No token provided");
+}
+
+$module = new YDCCLib\YDCCLibSecondLanguage\YDCCLibSecondLanguage();
+
+if ( !$dev_project_id = $module->getProjectAndUserFromToken($token)['project_id'] ) {
    badOutcome("Bad token");
 }
 
