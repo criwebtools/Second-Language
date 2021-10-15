@@ -1,5 +1,5 @@
 # Second Language External Module
-Version 1.1.0   
+Version 1.1.1   
 October 2021  
 Pete Charpentier and the REDCap@Yale team  
 https://portal.redcap.yale.edu  
