@@ -19,7 +19,7 @@
  * @param string $classOrTrait The fully-qualified class/trait name.
  * @return void
  */
-spl_autoload_register(function ($classOrTrait) {
+spl_autoload_register(function (string $classOrTrait) {
 
    // project-specific namespace prefix
    $prefix = 'Yale\\Yes3\\';
