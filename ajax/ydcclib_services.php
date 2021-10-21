@@ -244,7 +244,8 @@ function get_languages() {
 function get_initialization_data() {
    global $module;
 
-   $form_name = $_POST['form_name'];
+   //$form_name = $_POST['form_name'];
+   $form_name = htmlentities($_POST['form_name'], ENT_QUOTES);
    $form_name_sql = Yes3Fn::sql_string( $form_name );
    $project_id_sql = Yes3Fn::sql_string( $_POST['project_id'] );
 

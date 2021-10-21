@@ -1,5 +1,5 @@
 # Second Language External Module
-Version 1.1.1   
+Version 1.1.2   
 October 2021  
 Pete Charpentier and the REDCap@Yale team  
 https://portal.redcap.yale.edu  
@@ -42,8 +42,7 @@ Later versions of Second Language will have a more sophisticated approach to loa
 
 ![REDCap Field Editor](images/second_language_field_editor.png)
 
-<sub><sup>1</sup>You cannot use the Rich Text Editor for translations. If you require HTML in your translations and want to use
-the Rich Text Editor, we suggest that you: 
+<sub><sup>1</sup>You cannot use the Rich Text Editor for translations. If you require HTML in your translations and want to use the Rich Text Editor, we suggest that you: 
 (1) use the Rich Text Editor to generate the HTML for the Primary Language;
 (2) if necessary copy and paste the HTML into the translation (generally it will autopopulate); and
 (3) edit the translation as necessary.</sub>
